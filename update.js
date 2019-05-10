@@ -188,7 +188,7 @@ function parseBothTables(table, cols) {
                 default:
                     console.warn(`[${current}] unknown resource type "${matches[1]}".`)
             }
-            let value = +matches[2].replace(/,/g, '');
+            let value = +matches[2].replace(/[,\.]/g, '');
             thisLevelResources[type] = value;
         }
         // NaN -> null
@@ -219,7 +219,7 @@ function parseResourcesTable(table, cols) {
         let cells = [...r.querySelectorAll('td')].map(td => td.textContent);
         let values = {};
         Object.keys(cols).map(c => {
-            values[c] = +cells[cols[c]].trim().replace(/,/g, '');
+            values[c] = +cells[cols[c]].trim().replace(/[,\.]/g, '');
         });
         levels.push(values);// NaN -> null
         Object.keys(values).map(k => {
