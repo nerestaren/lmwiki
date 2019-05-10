@@ -10,6 +10,8 @@ let previousData;
 let current;
 let changes;
 
+scrapeResearch('Pact Merging Speed I');
+
 fs.access('.updating', async err => {
    if (err) {
        fs.writeFileSync('.updating');
@@ -27,7 +29,7 @@ fs.access('.updating', async err => {
                process.chdir('output');
                spawnSync('git', ['add', '.']);
                spawnSync('git', ['commit', '-m', new Date().toISOString() + "\n" + changes]);
-               spawnSync('git', 'push');
+               spawnSync('git', ['push']);
                process.chdir('..');
            }
        } catch (e) {
@@ -114,10 +116,10 @@ function parseRequirementsTable(table, cols) {
         let values = {};
         values.level = +cells[cols.level].trim();
         if (cols.value)
-            values.value = cells[cols.value].trim();
+            values.value = cells[cols.value].trim().replace(/,/g, '');
         values.might = +cells[cols.might].trim().replace(/,/g, '');
         values.requires = [];
-        let re = /^([^:]+):.*(\d+)$/gm;
+        let re = /\W*([^:]+):.*?(\d+)/gm;
         let matches;
         while ((matches = re.exec(cells[cols.requires]))) {
             values.requires.push({
@@ -126,6 +128,7 @@ function parseRequirementsTable(table, cols) {
             });
         }
         values.time = cells[cols.time].trim();
+        values.seconds = parseTime(values.time);
         // NaN -> null
         Object.keys(values).map(k => {
             if (Number.isNaN(values[k])) {
@@ -147,11 +150,12 @@ function parseBothTables(table, cols) {
         let thisLevelRequirements = {};
         let thisLevelResources = {};
         thisLevelRequirements.level = +cells[cols.level].trim();
+        thisLevelResources.level = +cells[cols.level].trim();
         if (cols.value)
-            thisLevelRequirements.value = cells[cols.value].trim();
+            thisLevelRequirements.value = cells[cols.value].trim().replace(/,/g, '');
         thisLevelRequirements.might = +cells[cols.might].trim().replace(/,/g, '');
         thisLevelRequirements.requires = [];
-        let regExpRequires = /^([^:]+):.*(\d+)$/gm;
+        let regExpRequires = /^([^:]+):.*?(\d+)$/gm;
         let matches;
         while ((matches = regExpRequires.exec(cells[cols.requires]))) {
             thisLevelRequirements.requires.push({
@@ -160,6 +164,7 @@ function parseBothTables(table, cols) {
             });
         }
         thisLevelRequirements.time = cells[cols.time].trim();
+        thisLevelRequirements.seconds = parseTime(thisLevelRequirements.time);
         let regExpResources = /^\s*^(\w+)[: ]+([\d,]+)\s*$/gm;
         while ((matches = regExpResources.exec(cells[cols.resources]))) {
             let type;
@@ -227,6 +232,38 @@ function parseResourcesTable(table, cols) {
     return levels;
 }
 
+function mergeTables(requirements, resources) {
+    let levels = [];
+    for (let i = 0; i < requirements.length; i++) {
+        let req = requirements[i];
+        let res = resources[i];
+        if (req.level === res.level) {
+            delete res.level;
+            req.resources = res;
+            levels.push(req);
+        } else {
+            console.warn(`[${current}] row ${i} level differ between tables.`);
+        }
+    }
+    return levels;
+}
+
+function parseTime(timeString) {
+    let matches = timeString.match(/(?:(\d+)d )?(\d+):(\d+):(\d+)/);
+    if (matches) {
+        let time = 0;
+        if (matches[1]) {
+            time += matches[1] * 86400; // days
+        }
+        time += matches[2] * 3600; // hours
+        time += matches[3] * 60; // minutes
+        time += +matches[4]; // seconds
+        return time;
+    } else {
+        return 0;
+    }
+}
+
 async function scrapeResearchTrees() {
     let trees = [];
 
@@ -237,7 +274,7 @@ async function scrapeResearchTrees() {
         try {
             trees.push(await scrapeTree(l));
         } catch (e) {
-            console.error(`Error when scraping tree ${l}:`)
+            console.error(`Error when scraping tree ${l}:`);
             console.error(e);
         }
         await sleep();
@@ -329,8 +366,7 @@ async function scrapeResearch(link) {
         }
         return {
             title,
-            requirements,
-            resources
+            requirements: mergeTables(requirements, resources)
         };
     }
 }
