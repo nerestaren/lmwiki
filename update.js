@@ -58,7 +58,7 @@ function getTableType(table) {
     if (cols.might !== -1) {
         cols.resources = header.findIndex(td => td.textContent.match(/Resources/) != null);
         cols.requires = header.findIndex(td => td.textContent.match(/Requires|Requirements|Required/) != null);
-        cols.time = header.findIndex(td => td.textContent.match(/^\W*(Orig\. )?Time\W*$/) != null);
+        cols.time = header.findIndex(td => td.textContent.match(/^\W*(Orig(\.|inal) )?Time\W*$/) != null);
         if (cols.requires === -1) {
             console.warn(`[${current}] missing "requires" in "requirements" table.`);
             return null;
