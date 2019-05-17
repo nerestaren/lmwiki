@@ -119,13 +119,17 @@ function parseRequirementsTable(table, cols) {
             values.value = cells[cols.value].trim().replace(/,/g, '');
         values.might = +cells[cols.might].trim().replace(/,/g, '');
         values.requires = [];
-        let re = /\W*([^:]+):.*?(\d+)/gm;
+        let re = /([^:]+):\W*Lv\.\W*(\w+)/gm;
         let matches;
         while ((matches = re.exec(cells[cols.requires]))) {
             values.requires.push({
-                r: matches[1],
+                r: matches[1].trim(),
                 l: +matches[2]
             });
+        }
+        // Check requires lengths
+        if (cells[cols.requires].split('\n').map(e => e.trim()).filter(e => e.length > 0).length !== values.requires.length) {
+            console.warn(`[${current} - Lv. ${values.level}] requires lengths differ.`)
         }
         values.time = cells[cols.time].trim();
         values.seconds = parseTime(values.time);
@@ -155,13 +159,17 @@ function parseBothTables(table, cols) {
             thisLevelRequirements.value = cells[cols.value].trim().replace(/,/g, '');
         thisLevelRequirements.might = +cells[cols.might].trim().replace(/,/g, '');
         thisLevelRequirements.requires = [];
-        let regExpRequires = /^([^:]+):.*?(\d+)$/gm;
+        let regExpRequires = /([^:]+):\W*Lv\.\W*(\w+)/gm;
         let matches;
         while ((matches = regExpRequires.exec(cells[cols.requires]))) {
             thisLevelRequirements.requires.push({
-                r: matches[1],
+                r: matches[1].trim(),
                 l: +matches[2]
             });
+        }
+        // Check requires lengths
+        if (cells[cols.requires].split('\n').map(e => e.trim()).filter(e => e.length > 0).length !== thisLevelRequirements.requires.length) {
+            console.warn(`[${current} - Lv. ${thisLevelRequirements.level}] requires lengths differ.`)
         }
         thisLevelRequirements.time = cells[cols.time].trim();
         thisLevelRequirements.seconds = parseTime(thisLevelRequirements.time);
