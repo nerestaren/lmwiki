@@ -165,7 +165,7 @@ function parseBothTables(table, cols) {
         }
         thisLevelRequirements.time = cells[cols.time].trim();
         thisLevelRequirements.seconds = parseTime(thisLevelRequirements.time);
-        let regExpResources = /^\s*^(\w+)[: ]+([\d,]+)\s*$/gm;
+        let regExpResources = /^\s*^(\w+)[: ]+([\d,.]+)\s*$/gm;
         while ((matches = regExpResources.exec(cells[cols.resources]))) {
             let type;
             switch (matches[1]) {
