@@ -280,7 +280,10 @@ async function scrapeResearchTrees() {
     let links = json.parse.links.map(e => e['*']);
     for (let l of links) {
         try {
-            trees.push(await scrapeTree(l));
+            let tree = await scrapeTree(l);
+            if (!trees.find(t => t.title === tree.title)) {
+                trees.push(tree);
+            }
         } catch (e) {
             console.error(`Error when scraping tree ${l}:`);
             console.error(e);
@@ -304,23 +307,25 @@ async function scrapeTree(link) {
     for (let l of links) {
         try {
             let research = await scrapeResearch(l);
-            researches.push(research);
-            (() => {
-                let pTree = previousData.find(tree => tree.title === link);
-                if (pTree) {
-                    let pResearch = pTree.researches.find(r => r.title === l); //TODO this will fail when redirecting :/
-                    if (pResearch) {
-                        let diff = detailedDiff(pResearch, research);
-                        if (Object.keys(diff.added).length > 0 || Object.keys(diff.deleted).length > 0 || Object.keys(diff.updated).length > 0) {
-                            changes += `Research ${l} in tree ${link}:\n` + JSON.stringify(diff, null, 2) + '\n';
+            if (!researches.find(r => r.title === research.title)) {
+                researches.push(research);
+                (() => {
+                    let pTree = previousData.find(tree => tree.title === link);
+                    if (pTree) {
+                        let pResearch = pTree.researches.find(r => r.title === l); //TODO this will fail when redirecting :/
+                        if (pResearch) {
+                            let diff = detailedDiff(pResearch, research);
+                            if (Object.keys(diff.added).length > 0 || Object.keys(diff.deleted).length > 0 || Object.keys(diff.updated).length > 0) {
+                                changes += `Research ${l} in tree ${link}:\n` + JSON.stringify(diff, null, 2) + '\n';
+                            }
+                        } else {
+                            changes += `New research ${l} in tree ${link}:\n` + JSON.stringify(detailedDiff({}, research).added, null, 2) + '\n';
                         }
                     } else {
-                        changes += `New research ${l} in tree ${link}:\n` + JSON.stringify(detailedDiff({}, research).added, null, 2) + '\n';
+                        changes += `New research ${l} in new tree ${link}:\n` + JSON.stringify(detailedDiff({}, research).added, null, 2) + '\n';
                     }
-                } else {
-                    changes += `New research ${l} in new tree ${link}:\n` + JSON.stringify(detailedDiff({}, research).added, null, 2) + '\n';
-                }
-            })();
+                })();
+            }
         } catch (e) {
             console.error(`Error when scraping research ${l}:`);
             console.error(e);
