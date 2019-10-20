@@ -57,8 +57,8 @@ function getTableType(table) {
     cols.might = header.findIndex(td => td.textContent.match(/Might/) != null);
     if (cols.might !== -1) {
         cols.resources = header.findIndex(td => td.textContent.match(/Resources/) != null);
-        cols.requires = header.findIndex(td => td.textContent.match(/Requires|Requirements|Required/) != null);
-        cols.time = header.findIndex(td => td.textContent.match(/^\W*(Orig(\.|inal) )?Time\W*$/) != null);
+        cols.requires = header.findIndex(td => td.textContent.match(/Requires|Requirement|Requirements|Required/) != null);
+        cols.time = header.findIndex(td => td.textContent.match(/^\W*((Orig(\.|inal) )|Research )?Time\W*$/i) != null);
         if (cols.requires === -1) {
             console.warn(`[${current}] missing "requires" in "requirements" table.`);
             return null;
@@ -257,7 +257,7 @@ function mergeTables(requirements, resources) {
 }
 
 function parseTime(timeString) {
-    let matches = timeString.match(/(?:(\d+)d )?(\d+):(\d+):(\d+)/);
+    let matches = timeString.replace(/\s/g).match(/(?:(\d+)d)?(\d+)[:h](\d+)[:m](\d+)s?/i);
     if (matches) {
         let time = 0;
         if (matches[1]) {
