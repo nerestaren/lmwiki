@@ -96,7 +96,7 @@ function getTableType(table) {
             return null;
         }
         cols.anima = header.findIndex(td => td.textContent.match(/Anima/) != null);
-        cols.tomes = header.findIndex(td => td.textContent.match(/Archaic Tome/) != null);
+        cols.tomes = header.findIndex(td => td.textContent.match(/(Archaic )?Tome/i) != null);
 
         // Esborram claus no trobades
         Object.keys(cols).map(c => cols[c] === -1 && delete cols[c]);
@@ -173,31 +173,35 @@ function parseBothTables(table, cols) {
         }
         thisLevelRequirements.time = cells[cols.time].trim();
         thisLevelRequirements.seconds = parseTime(thisLevelRequirements.time);
-        let regExpResources = /^\s*^(\w+)[: ]+([\d,.]+)\s*$/gm;
-        while ((matches = regExpResources.exec(cells[cols.resources]))) {
-            let type;
-            switch (matches[1]) {
-                case 'F':
-                    type = 'food';
-                    break;
-                case 'S':
-                    type = 'stone';
-                    break;
-                case 'T':
-                case 'W':
-                    type = 'timber';
-                    break;
-                case 'O':
-                    type = 'ore';
-                    break;
-                case 'G':
-                    type = 'gold';
-                    break;
-                default:
-                    console.warn(`[${current}] unknown resource type "${matches[1]}".`)
+        if (cols.resources) {
+            let regExpResources = /^\s*^(\w+)[: ]+([\d,.]+)\s*$/gm;
+            while ((matches = regExpResources.exec(cells[cols.resources]))) {
+                let type;
+                switch (matches[1]) {
+                    case 'F':
+                        type = 'food';
+                        break;
+                    case 'S':
+                        type = 'stone';
+                        break;
+                    case 'T':
+                    case 'W':
+                        type = 'timber';
+                        break;
+                    case 'O':
+                        type = 'ore';
+                        break;
+                    case 'G':
+                        type = 'gold';
+                        break;
+                    default:
+                        console.warn(`[${current}] unknown resource type "${matches[1]}".`)
+                }
+                let value = +matches[2].replace(/[,\.]/g, '');
+                thisLevelResources[type] = value;
             }
-            let value = +matches[2].replace(/[,\.]/g, '');
-            thisLevelResources[type] = value;
+        } else {
+
         }
         // NaN -> null
         Object.keys(thisLevelRequirements).map(k => {
@@ -257,7 +261,7 @@ function mergeTables(requirements, resources) {
 }
 
 function parseTime(timeString) {
-    let matches = timeString.replace(/\s/g).match(/(?:(\d+)d)?(\d+)[:h](\d+)[:m](\d+)s?/i);
+    let matches = timeString.replace(/\s/g, '').match(/(?:(\d+)d)?(\d+)[:h](\d+)[:m](\d+)s?/i);
     if (matches) {
         let time = 0;
         if (matches[1]) {
