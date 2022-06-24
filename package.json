@@ -12,6 +12,6 @@
   "dependencies": {
     "deep-object-diff": "^1.1.0",
     "jsdom": "^14.0.0",
-    "node-fetch": "^2.3.0"
+    "node-fetch": "^2.6.7"
   }
 }
